@@ -1,0 +1,50 @@
+#!/bin/bash
+source $(dirname ${BASH_SOURCE})/../../shf3/lib/header
+include ${HOME}/shf3.vasp/lib
+import gui
+import ngb/vasp
+
+function help/vasp_origo_select() {
+  cat << EOF
+VASP select origo
+
+Usage: ${gbn} options
+              -p prefix
+              -o origo
+              -s origo no
+EOF
+  exit 1
+}
+
+### args
+prefix=""
+ono=0
+origo="origo"
+
+while getopts hvp:o:s: o; do
+  case "$o" in
+    p) prefix=$OPTARG;;
+    o) origo=${OPTARG};;
+    s) ono=${OPTARG};;
+    v) gdbg=true;;
+    h|*) help/vasp_origo_select;;
+  esac
+done
+
+### main
+msg
+gui/line
+
+poscar="CONTCAR"
+if ! empty "${prefix}" ; then
+  poscar="${prefix}.CONTCAR"
+fi
+
+if ! readable "${poscar}" ; then
+  msg "Not found: ${poscar}"
+  exit 1
+fi
+
+msg "POSCAR: ${poscar}"
+vsgeom -i "${poscar}" -s ${ono}
+vsgeom -i "${poscar}" -s ${ono} > "${origo}"

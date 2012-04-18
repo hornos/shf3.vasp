@@ -1,0 +1,47 @@
+#!/bin/bash
+source $(dirname ${BASH_SOURCE})/../../shf3/lib/header
+include ${HOME}/shf3.vasp/lib
+import gui
+import ngb/vasp
+
+function help/vasp_density_shift() {
+  cat << EOF
+VASP density shift wrapper for lev00
+
+Usage: ${gbn} options
+              -p prefix
+              -l postfix
+              -o origo file
+EOF
+  exit 1
+}
+
+### args
+prefix=""
+origo="origo"
+postfix=""
+
+while getopts hvp:l:o: o; do
+  case "$o" in
+    p) prefix=$OPTARG;;
+    l) postfix=${OPTARG};;
+    o) origo=${OPTARG};;
+    v) gdbg=true;;
+    h|*) help/vasp_density_shift;;
+  esac
+done
+
+### main
+msg
+gui/line
+
+answer "Uncompress outputs?"
+if succeed $? ; then
+  ngb/vasp/gunzip "${prefix}"
+fi
+
+answer "Shift densities?"
+if failed $? ; then
+  exit 1
+fi
+ngb/vasp/shift "${origo}" "${postfix}"

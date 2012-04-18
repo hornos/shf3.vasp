@@ -1,0 +1,53 @@
+#!/bin/bash
+source $(dirname ${BASH_SOURCE})/../../shf3/lib/header
+include ${HOME}/shf3.vasp/lib
+import gui
+import ngb/vasp
+
+function help/vasp_density_pack() {
+  cat << EOF
+VASP density packer
+
+Usage: ${gbn} options
+              -p prefix
+              -u - unzip
+EOF
+  exit 1
+}
+
+### args
+prefix=""
+_u=false
+while getopts hvup: o; do
+  case "$o" in
+    p) prefix=$OPTARG;;
+    u) _u=true;;
+    v) gdbg=true;;
+    h|*) help/vasp_density_pack;;
+  esac
+done
+
+### main
+msg
+gui/line
+
+
+if ${_u} ; then
+  if ! empty "${prefix}" ; then
+    ls ${prefix}*.gz
+  fi
+  answer "Uncompress?"
+  if succeed $? ; then
+    ngb/vasp/gunzip "${prefix}"
+  fi
+  exit $?
+fi
+
+if ! empty "${prefix}" ; then
+  ls ${prefix}
+fi
+answer "Compress?"
+if failed $? ; then
+  exit 1
+fi
+ngb/vasp/gzip "${prefix}"

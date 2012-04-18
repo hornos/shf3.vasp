@@ -1,0 +1,7 @@
+ngb_vasp_output="OUTCAR CONTCAR"
+ngb_vasp_density="LOCPOT CHGCAR"
+
+ngb_vasp_gzip="pigz"
+ngb_vasp_gzip_opt="-p ${OMP_NUM_THREADS:-4}"
+
+ngb_vasp_lev="lev00"

@@ -1,0 +1,123 @@
+function ngb/vasp/origo() {
+  local _origo="${1:-origo}"
+  if ! readable "${_origo}" ; then
+    echo ""
+    $failure
+  fi
+  cat "${origo}" | \
+  awk '/Cart/{split($0,a); print $3 "," $4 "," $5;}'
+}
+
+
+function ngb/vasp/gzip() {
+  local _pre="${1}"
+  if ! empty "${_pre}" ; then
+    _pre="${_pre}."
+  fi
+
+  local i
+  for i in ${ngb_vasp_output} ${ngb_vasp_density} ; do
+    local _inp="${_pre}${i}"
+    if readable "${_inp}" ; then
+      msg "Compress: ${_inp}"
+      ${ngb_vasp_gzip} ${ngb_vasp_gzip_opt} "${_inp}"
+      if failed $? ; then
+        $failure
+      fi
+    fi
+  done
+}
+
+function ngb/vasp/gunzip() {
+  local _pre="${1}"
+  if ! empty "${_pre}" ; then
+    _pre="${_pre}."
+  fi
+
+  local i
+  for i in ${ngb_vasp_output} ${ngb_vasp_density} ; do
+    local _inp="${_pre}${i}.gz"
+    if readable "${_inp}" ; then
+      msg "Uncompress: ${_inp}"
+      ${ngb_vasp_gzip} ${ngb_vasp_gzip_opt} -d "${_inp}"
+      if failed $? ; then
+        $failure
+      fi
+    fi
+    _inp=${_inp%%.gz}
+    if ! readable "${_inp}" ; then
+      msg "${FUNCNAME} Not found: ${_inp}"
+      $failure
+    fi
+    if ! test "${_inp}" = "${i}" ; then
+      cp -fv "${_inp}" "${i}"
+    fi
+  done
+}
+
+function ngb/vasp/shift() {
+  local _origo="${1}"
+  local _pre="${2}"
+  if empty "${_pre}" ; then
+    _pre="${gbn}."
+  else
+    _pre="${_pre}."
+  fi
+
+  if ! readable "${_origo}" ; then
+    msg "${FUNCNAME} Not found: ${_origo}"
+    $failure
+  fi
+  _origo=$(ngb/vasp/origo "${_origo}")
+
+  if ! installed "${ngb_vasp_lev}" ; then
+    msg "${FUNCNAME} Lev not found: ${ngb_vasp_lev}"
+    $failure
+  fi
+
+  local i
+  for i in ${ngb_vasp_output} ${ngb_vasp_density} ; do
+    if ! readable "${i}" ; then
+      msg "${FUNCNAME} Not found: ${i}"
+      $failure
+    fi
+  done
+
+  local _log=""
+  local _cmd=""
+  local _typ=""
+  local _out="CHGCAR.new"
+  for i in ${ngb_vasp_density} ; do
+    _log="${i}.log"
+    _lev="${i}.lev"
+    _typ=${i:0:1}
+    echo ""
+    msg "Shift: ${i}"
+    msg "Origo: ${_origo}"
+
+    ### begin lev00 control script
+    echo "V"           >  "${_lev}"
+    echo "OUTCAR"      >> "${_lev}"
+    echo "CONTCAR"     >> "${_lev}"
+    echo "D"           >> "${_lev}"
+    echo "${_typ}"     >> "${_lev}"
+    if ! empty "${_origo}" ; then
+      echo "Sf"        >> "${_lev}"
+      echo "${_origo}" >> "${_lev}"
+    fi
+    echo "wD"          >> "${_lev}"
+    echo "Q"           >> "${_lev}"
+    echo "Q"           >> "${_lev}"
+    ### end lev00 control script
+
+    msg "Running ${ngb_vasp_lev}"
+    time OMP_NUM_THREADS=${OMP_NUM_THREADS:-4} ${ngb_vasp_lev} < "${_lev}" &> "${_log}"
+
+    if ! readable "${_out}" ; then
+      msg "Not found: ${_out}"
+      $failure
+    fi
+
+    mv -vf "${_out}" ${_pre}${i}
+  done
+}

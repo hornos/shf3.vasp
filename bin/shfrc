@@ -1,0 +1,4 @@
+### global
+shf3_vasp_root=$(cd $(dirname "${BASH_SOURCE}");cd ..;pwd -P)
+
+PATH=${PATH}:${shf3_vasp_root}/bin
