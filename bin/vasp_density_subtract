@@ -37,6 +37,9 @@ done
 msg
 gui/line
 
+
+msg "a : ${from}"
+msg "b : ${what}"
 answer "Subtract densities?"
 if failed $? ; then
   exit 1

@@ -125,7 +125,7 @@ function ngb/vasp/shift() {
 function ngb/vasp/subtract() {
   local _from="${1}"
   local _what="${2}"
-  local _pre="${2}"
+  local _pre="${3}"
   if empty "${_pre}" ; then
     _pre="${gbn}."
   else
@@ -146,7 +146,7 @@ function ngb/vasp/subtract() {
   done
 
   local _log="${_from}.log"
-  local _cmd="${_from}.lev"
+  local _lev="${_from}.lev"
   local _out="CHGCAR_ab"
   local _res="${_pre}CHGCAR"
 
