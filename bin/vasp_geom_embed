@@ -1,0 +1,92 @@
+#!/bin/bash
+source $(dirname ${BASH_SOURCE})/../../shf3/lib/header
+include ${HOME}/shf3.vasp/lib
+import gui
+import ngb/vasp
+
+### args
+function help/vasp_geom_embed() {
+  cat << EOF
+VASP geometry crop and embed wrapper
+
+Usage: ${gbn} options
+              -c config
+EOF
+  exit 1
+}
+
+### args
+cfg="${gbn.cfg}"
+while getopts hvc: o; do
+  case "$o" in
+    c) cfg=$OPTARG;;
+    v) gdbg=true;;
+    h|*) help/vasp_geom_embed;;
+  esac
+done
+
+
+### main
+msg
+gui/line
+
+if ! readable "${cfg}" ; then
+  msg "Not found: ${_cfg}"
+  exit 1
+fi
+source "${cfg}"
+
+### crop
+vmdmgr reset
+vstool -i "${CROP_FROM}" -t "${CROP_TRAN}"
+
+if failed $? ; then exit 1; fi
+embed="vstool.POSCAR"
+
+### rotate
+if ! test -z "${rotate}" ; then
+  if test -r "${rotate}" ; then
+    vstool -i "${embed}" -t "${rotate}"
+    if test $? -gt 0 ; then
+      exit 1
+    fi
+    embed="vstool.POSCAR"
+  fi
+fi
+
+### embed
+for i in "${host}" "${embed}" ; do
+  if ! test -r "${i}" ; then
+    echo "Not found: ${i}"
+    exit 1
+  fi
+done
+vmdmgr load "${host}"
+
+_host="${host}:${host_no}"
+_embed="${embed}:${embed_no}"
+
+vsembed -i "${_host}" -e "${_embed}"
+if test $? -gt 0 ; then
+  exit 1
+fi
+_out="vsembed.POSCAR"
+if ! test -r "${_out}"; then
+  echo "Not found: ${_out}"
+  exit 1
+fi
+
+### geom
+vstool -i "${_out}" -t "${geom}"
+if test $? -gt 0 ; then
+  exit 1
+fi
+_out="vstool.POSCAR"
+if ! test -r "${_out}"; then
+  echo "Not found: ${_out}"
+  exit 1
+fi
+
+cp -f "${_out}" "${geom_to}"
+
+vmdmgr load "${geom_to}"

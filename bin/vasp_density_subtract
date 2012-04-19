@@ -1,0 +1,44 @@
+#!/bin/bash
+source $(dirname ${BASH_SOURCE})/../../shf3/lib/header
+include ${HOME}/shf3.vasp/lib
+import gui
+import ngb/vasp
+
+function help/vasp_density_subtract() {
+  cat << EOF
+VASP density subtract wrapper for lev00
+
+result = a - b
+
+Usage: ${gbn} options
+              -a from
+              -b what
+              -l postfix
+EOF
+  exit 1
+}
+
+### args
+from=""
+what="origo"
+postfix=""
+
+while getopts hvl:a:b: o; do
+  case "$o" in
+    a) from=$OPTARG;;
+    b) what=$OPTARG;;
+    l) postfix=${OPTARG};;
+    v) gdbg=true;;
+    h|*) help/vasp_density_subtract;;
+  esac
+done
+
+### main
+msg
+gui/line
+
+answer "Subtract densities?"
+if failed $? ; then
+  exit 1
+fi
+ngb/vasp/subtract "${from}" "${what}" "${postfix}"
