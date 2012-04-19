@@ -44,7 +44,7 @@ if ${_u} ; then
 fi
 
 if ! empty "${prefix}" ; then
-  ls ${prefix}
+  ls ${prefix}*
 fi
 answer "Compress?"
 if failed $? ; then
