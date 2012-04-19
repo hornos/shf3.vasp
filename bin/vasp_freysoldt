@@ -11,4 +11,3 @@ if test "${*}" = "-h" ; then
 fi
 
 sxda $*
-sxda -p
