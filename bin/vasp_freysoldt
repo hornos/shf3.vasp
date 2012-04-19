@@ -1,4 +1,11 @@
 #!/bin/bash
 
+while getopts hp o; do
+  case "$o" in
+    p) sxda -p; exit $?;;
+    h) sxda -h; exit $?;;
+  esac
+done
+
 sxda $*
 sxda -p
