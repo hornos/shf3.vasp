@@ -1,11 +1,14 @@
 #!/bin/bash
 
-while getopts hp o; do
-  case "$o" in
-    p) sxda -p; exit $?;;
-    h) sxda -h; exit $?;;
-  esac
-done
+if test "${*}" = "-p" ; then
+  sxda -p
+  exit $?
+fi
+
+if test "${*}" = "-h" ; then
+  sxda -h
+  exit $?
+fi
 
 sxda $*
 sxda -p
