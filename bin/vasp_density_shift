@@ -12,6 +12,7 @@ Usage: ${gbn} options
               -p prefix
               -l postfix
               -o origo file
+              -z - unzip densities
 EOF
   exit 1
 }
@@ -20,12 +21,13 @@ EOF
 prefix=""
 origo="origo"
 postfix=""
-
-while getopts hvp:l:o: o; do
+_z=false
+while getopts hvzp:l:o: o; do
   case "$o" in
     p) prefix=$OPTARG;;
     l) postfix=${OPTARG};;
     o) origo=${OPTARG};;
+    z) _z=true;;
     v) gdbg=true;;
     h|*) help/vasp_density_shift;;
   esac
@@ -35,9 +37,11 @@ done
 msg
 gui/line
 
-answer "Uncompress outputs?"
-if succeed $? ; then
-  ngb/vasp/gunzip "${prefix}"
+if ${_z} ; then
+  answer "Uncompress outputs?"
+  if succeed $? ; then
+    ngb/vasp/gunzip "${prefix}"
+  fi
 fi
 
 answer "Shift densities?"
