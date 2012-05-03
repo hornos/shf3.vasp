@@ -14,11 +14,13 @@ EOF
 ### args
 rho="10"
 cfg="${gbn}.dat"
-while getopts hvc:f: o; do
+_p=false
+while getopts hvpc:f: o; do
   case "$o" in
     f) rho=$OPTARG;;
     c) cfg=${OPTARG};;
     v) gdbg=true;;
+    p) _p=true;;
     h|*) help/vasp_aps;;
   esac
 done
@@ -59,3 +61,35 @@ answer "Average?"
 if failed $? ; then exit 1; fi
 
 vsasepot -f ${rho} -r "${perfect}" -i "${defect}" -o "${origo}" -d "${vac}"
+
+if ${_p} ; then
+  echo ""
+  answer "Plot?"
+  if failed $? ; then exit 1; fi
+
+  dat="asediff_${rho}.dat"
+  plot="asediff_${rho}.plot"
+
+  avg=$(vsasepot -f ${rho} -r "${perfect}" -i "${defect}" -o "${origo}" -d "${vac}" | \
+  grep APS | awk '{print $3}')
+
+  vsasepot -f ${rho} -r "${perfect}" -i "${defect}" -o "${origo}" -d "${vac}" | \
+  grep ASEDIFF > "${dat}"
+
+  cat << EOF > "${plot}"
+set title "Atomic-site electrostatic potential r>=${rho}"
+set ylabel "ASE VD - VH (eV)"
+set xlabel "Distance (Angstrom)"
+plot '${dat}' using 4:5 title 'VD - VH'
+f(x)=${avg}
+replot f(x) title 'Average' with lines
+set term png
+set output "asediff_${rho}.png"
+replot
+set term postscript
+set output "asediff_${rho}.ps"
+replot
+set term x11
+EOF
+  gnuplot -persist "${plot}"
+fi
