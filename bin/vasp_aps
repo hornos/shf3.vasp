@@ -1,0 +1,61 @@
+#!/bin/bash
+source $(dirname ${BASH_SOURCE})/../../shf3/lib/header
+include ${HOME}/shf3.vasp/lib
+import gui
+
+function help/vasp_aps() {
+  cat << EOF
+  Average potential shift wrapper
+  https://iopscience.iop.org/0965-0393/17/8/084002
+EOF
+  exit 1
+}
+
+### args
+rho="10"
+cfg="${gbn}.dat"
+while getopts hvc:f: o; do
+  case "$o" in
+    f) rho=$OPTARG;;
+    c) cfg=${OPTARG};;
+    v) gdbg=true;;
+    h|*) help/vasp_aps;;
+  esac
+done
+
+### main
+if ! test -r "${cfg}" ; then
+  echo "Not found: ${cfg}"
+  exit 1
+fi
+
+source "${cfg}"
+
+for i in "${perfect}" "${defect}" "${origo}"; do
+  if ! test -r "${i}" ; then
+    echo "Not found: ${i}"
+    exit 1
+  fi
+done
+
+origo=$(cat "${origo}" | \
+awk '{
+  if(match($0,"^ *[0-9]+")) {
+    print $2 ":" $1;
+  }
+}')
+
+if test -z "${origo}" ; then
+  echo "Origo not found"
+  exit 1
+fi
+
+vac=${origo/*:/}
+echo "Perfect: ${perfect}"
+echo "Defect:  ${defect}"
+echo "Origo:   ${origo}"
+echo "Vacancy: ${vac}"
+answer "Average?"
+if failed $? ; then exit 1; fi
+
+vsasepot -f ${rho} -r "${perfect}" -i "${defect}" -o "${origo}" -d "${vac}"
