@@ -7,6 +7,14 @@ function help/vasp_aps() {
   cat << EOF
   Average potential shift wrapper
   https://iopscience.iop.org/0965-0393/17/8/084002
+
+  Usage: ${gbn} options
+                -f rho
+                -c config file
+                -r min:max - range plot for rho
+                -p - plot
+                -h - help
+                -v - verbose
 EOF
   exit 1
 }
@@ -15,11 +23,13 @@ EOF
 rho="10"
 cfg="${gbn}.dat"
 _p=false
-while getopts hvpc:f: o; do
+_r=""
+while getopts hvpc:f:r: o; do
   case "$o" in
     f) rho=$OPTARG;;
     c) cfg=${OPTARG};;
     v) gdbg=true;;
+    r) _r=$OPTARG;;
     p) _p=true;;
     h|*) help/vasp_aps;;
   esac
@@ -57,6 +67,47 @@ echo "Perfect: ${perfect}"
 echo "Defect:  ${defect}"
 echo "Origo:   ${origo}"
 echo "Vacancy: ${vac}"
+
+if ! test -z "${_r}" ; then
+  min=${_r/:*/}
+  max=${_r/*:/}
+  echo "Rho min: ${min}"
+  echo "Rho max: ${max}"
+  answer "Average?"
+  if failed $? ; then exit 1; fi
+
+  dat="asediff_${min}_${max}.dat"
+  plot="asediff_${min}_${max}.plot"
+
+  for((i=${min};i<=${max};++i)) ; do
+    avg=$(vsasepot -f ${i} -r "${perfect}" -i "${defect}" -o "${origo}" -d "${vac}" | \
+    grep APS | awk '{print $3}')
+    echo ${i} ${avg}
+  done | tee "${dat}"
+
+  echo ""
+  answer "Plot?"
+  if failed $? ; then exit 1; fi
+
+  cat << EOF > "${plot}"
+set title "Averaged atomic-site elstat potential ${min} < r < ${max}"
+set ylabel "Averaged ASE VD - VH (eV)"
+set xlabel "Distance (Angstrom)"
+set pointsize 6
+plot '${dat}' using 1:2 title 'Avg VD - VH' with linespoints
+set term png
+set output "asediff_${min}_${max}.png"
+replot
+set term postscript
+set output "asediff_${min}_${max}.ps"
+replot
+set term x11
+EOF
+  gnuplot -persist "${plot}"
+  exit
+fi
+
+
 answer "Average?"
 if failed $? ; then exit 1; fi
 
@@ -77,7 +128,7 @@ if ${_p} ; then
   grep ASEDIFF > "${dat}"
 
   cat << EOF > "${plot}"
-set title "Atomic-site electrostatic potential r>=${rho}"
+set title "Atomic-site elstat potential r >= ${rho}"
 set ylabel "ASE VD - VH (eV)"
 set xlabel "Distance (Angstrom)"
 plot '${dat}' using 4:5 title 'VD - VH'
