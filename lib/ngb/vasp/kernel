@@ -70,7 +70,7 @@ function ngb/vasp/shift() {
   fi
   _origo=$(ngb/vasp/origo "${_origo}")
 
-  if ! installed "${ngb_vasp_lev}" ; then
+  if ! u/installed "${ngb_vasp_lev}" ; then
     msg "${FUNCNAME} Lev not found: ${ngb_vasp_lev}"
     $failure
   fi
