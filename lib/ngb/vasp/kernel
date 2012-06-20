@@ -132,7 +132,7 @@ function ngb/vasp/subtract() {
     _pre="${_pre}."
   fi
 
-  if ! installed "${ngb_vasp_lev}" ; then
+  if ! u/installed "${ngb_vasp_lev}" ; then
     msg "${FUNCNAME} Lev not found: ${ngb_vasp_lev}"
     $failure
   fi
